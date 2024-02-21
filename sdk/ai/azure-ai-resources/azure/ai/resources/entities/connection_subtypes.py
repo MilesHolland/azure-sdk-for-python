@@ -6,6 +6,7 @@
 import os
 from typing import Optional
 
+from azure.identity import get_bearer_token_provider
 from azure.ai.ml.entities._credentials import ApiKeyConfiguration
 from azure.core.credentials import TokenCredential
 from azure.ai.ml.constants._common import (
@@ -110,6 +111,28 @@ class AzureOpenAIConnection(BaseConnection):
             self._set_current_environment_new(credential)
         else:
             self._set_current_environment_old(credential)
+
+    def get_openai_token_provider(self, credential: TokenCredential):
+        return get_bearer_token_provider(credential, "https://cognitiveservices.azure.com/.default")
+    
+    def get_openai_handle(self, credential: Optional[TokenCredential] = None):
+        try:
+            from openai import AzureOpenAI
+            if credential:
+                return AzureOpenAI(
+                    api_version=self.api_version,
+                    azure_endpoint=self.target,
+                    azure_ad_token_provider=self.get_openai_token_provider(credential)
+                )
+            elif self._workspace_connection.credentials:
+                return AzureOpenAI(
+                    api_version=self.api_version,
+                    azure_endpoint=self.target,
+                    api_key=self._workspace_connection.credentials.key
+                )
+        except ImportError:
+            raise ImportError("The openai package is required to use this feature. Please install it using 'pip install openai'")
+
 
     def _get_api_version_case_insensitive(self, connection):
         if connection.api_version == None:
