@@ -227,14 +227,13 @@ class RAIClient:  # pylint: disable=client-accepts-api-version-keyword
             "riskTypes": ",".join(risk_categories),
             "lang": "en"  # Default to English
         }
-        
         # Add strategy parameter if provided
         if strategy:
             params["strategy"] = strategy
             
         try:
             # Make the request using the existing get method
-            result = await self.get(self.attack_objectives_endpoint, params)
+            result = await self.get(self.attack_objectives_endpoint)
             return result
         except Exception:
             # If the API fails or isn't implemented yet, return a mock response
